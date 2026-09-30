@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>no slop · settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="label">settings</p>
+        <h1>
+          Eat no <span class="slop">SLOP</span> &amp; Cook no
+          <span class="slop">SLOP</span>
+        </h1>
+        <p class="dek">
+          Scores what you read and what you write on this machine. Nothing
+          leaves it unless you add a Pangram key below.
+        </p>
+      </header>
+
+      <section>
+        <h2><span class="n">01</span>eat</h2>
+        <label class="row"
+          ><input type="checkbox" data-k="eat" />
+          <span>Blur machine-written text as I read</span></label
+        >
+        <fieldset>
+          <legend>How sure before it acts</legend>
+          <label class="row"
+            ><input type="radio" name="sensitivity" value="gentle" />
+            <span
+              ><b>gentle</b> only the obvious
+              <em class="fp" data-fp="gentle"></em></span
+          ></label>
+          <label class="row"
+            ><input type="radio" name="sensitivity" value="balanced" />
+            <span><b>balanced</b> <em class="fp" data-fp="balanced"></em></span
+          ></label>
+          <label class="row"
+            ><input type="radio" name="sensitivity" value="strict" />
+            <span
+              ><b>strict</b> catches more, errs more
+              <em class="fp" data-fp="strict"></em></span
+          ></label>
+        </fieldset>
+        <fieldset>
+          <legend>What to do with it</legend>
+          <label class="row"
+            ><input type="radio" name="action" value="blur" />
+            <span><b>blur</b> with a note and a show button</span></label
+          >
+          <label class="row"
+            ><input type="radio" name="action" value="label" />
+            <span><b>label</b> only, leave it readable</span></label
+          >
+        </fieldset>
+        <label class="row"
+          ><input type="checkbox" data-k="images" />
+          <span
+            >Blur images whose files say they were generated (C2PA, IPTC, Stable
+            Diffusion / ComfyUI metadata)</span
+          ></label
+        >
+      </section>
+
+      <section>
+        <h2><span class="n">02</span>cook</h2>
+        <label class="row"
+          ><input type="checkbox" data-k="cook" />
+          <span
+            >Show the tells in what I'm writing, in any text box</span
+          ></label
+        >
+        <p class="note">
+          Your drafts are scored in the page and go nowhere else, Pangram
+          included.
+        </p>
+      </section>
+
+      <section>
+        <h2>
+          <span class="n">03</span>pangram <span class="opt">optional</span>
+        </h2>
+        <fieldset>
+          <legend>Second opinion from Pangram's detector</legend>
+          <label class="row"
+            ><input type="radio" name="pangram" value="off" />
+            <span><b>off</b></span></label
+          >
+          <label class="row"
+            ><input type="radio" name="pangram" value="selection" />
+            <span><b>when I ask</b> right-click → check selection</span></label
+          >
+          <label class="row"
+            ><input type="radio" name="pangram" value="confirm" />
+            <span
+              ><b>confirm blocks</b> every blurred block is sent for a second
+              look, and unblurred if Pangram calls it human</span
+            ></label
+          >
+        </fieldset>
+        <label class="key">
+          <span>API key</span>
+          <input
+            type="password"
+            id="key"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="from pangram.com → account → API"
+          />
+        </label>
+        <p class="note">
+          Text you send goes to <code>text.external-api.pangram.com</code> and
+          is billed to your Pangram plan (per 100 words). Checked text is
+          cached, so the same block is never paid for twice. The key stays in
+          this browser's local extension storage.
+        </p>
+      </section>
+
+      <section>
+        <h2><span class="n">04</span>paused sites</h2>
+        <p class="note">
+          One click on the toolbar icon pauses a site. Resume it here or with
+          another click.
+        </p>
+        <ul id="paused"></ul>
+      </section>
+
+      <footer>
+        <p id="model" class="note"></p>
+        <p class="saved" id="saved" aria-live="polite"></p>
+      </footer>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

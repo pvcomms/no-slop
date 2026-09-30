@@ -1,0 +1,33 @@
+/* no-slop · page styles. Only ever applied through [data-noslop] attributes the content
+   script sets; the notes themselves live in closed shadow roots marked [data-noslop-ui]. */
+
+[data-noslop="blocked"],
+[data-noslop="blocked"] *:not([data-noslop-ui]) {
+  color: transparent !important;
+  text-shadow: 0 0 0.6em rgba(128, 128, 128, 0.9) !important;
+  -webkit-text-fill-color: transparent !important;
+  user-select: none !important;
+  transition: text-shadow 0.2s ease !important;
+}
+[data-noslop="blocked"] img,
+[data-noslop="blocked"] video,
+[data-noslop="blocked"] picture,
+img[data-noslop="blocked"] {
+  filter: blur(18px) saturate(0.6) !important;
+  transition: filter 0.2s ease !important;
+}
+[data-noslop="labelled"] {
+  outline: 1px dashed rgba(224, 122, 107, 0.55) !important;
+  outline-offset: 3px !important;
+}
+[data-noslop="shown"] {
+  outline: 1px dotted rgba(150, 145, 127, 0.5) !important;
+  outline-offset: 3px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-noslop="blocked"],
+  [data-noslop="blocked"] *,
+  img[data-noslop="blocked"] {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,7 @@
+test/fixtures/.cache/
+.DS_Store
+node_modules/
+dist/
+.venv/
+.e2e/
+*.zip

@@ -1,0 +1,50 @@
+[
+  {
+    "genre": "podcast-desc",
+    "text": "In this episode, we sit down with Dr. Maya Chen, a leading voice in behavioral economics, to explore why we make the financial decisions we do. From the hidden biases that shape our spending habits to practical strategies for building long-term wealth, Maya shares insights that will change the way you think about money. Whether you're just starting out or planning for retirement, this conversation offers valuable takeaways for everyone."
+  },
+  {
+    "genre": "faq-answer",
+    "text": "Yes, you can freeze cooked rice. Let it cool to room temperature within an hour of cooking, then portion it into airtight containers or freezer bags. Flatten the bags so the rice freezes evenly and thaws faster. Frozen rice keeps for about a month. To reheat, microwave it with a splash of water, covered, until it is steaming hot all the way through."
+  },
+  {
+    "genre": "team-update",
+    "text": "Hi team! Just a quick update on where we are with the migration. We've made great progress this sprint and successfully moved over 80% of our services to the new infrastructure. This is a huge milestone, and it wouldn't have been possible without everyone's hard work and dedication. Moving forward, our focus will be on optimizing performance and ensuring a smooth transition for the remaining services. Thanks again for all your efforts — let's keep the momentum going!"
+  },
+  {
+    "genre": "museum",
+    "text": "Housed in a beautifully restored 19th-century warehouse, the Maritime Museum invites visitors on an immersive journey through the city's seafaring past. Interactive exhibits bring centuries of trade, exploration, and innovation to life, while a stunning collection of ship models and artifacts offers a fascinating window into the lives of sailors and merchants. It's a must-see for history enthusiasts and families alike."
+  },
+  {
+    "genre": "motivational",
+    "text": "Success doesn't happen overnight. It's built one small decision at a time. Every early morning, every uncomfortable conversation, every time you choose progress over perfection — that's where the magic happens. Stop waiting for the perfect moment. The perfect moment is now. Believe in yourself, trust the process, and keep showing up. Your future self will thank you."
+  },
+  {
+    "genre": "app-store",
+    "text": "Stay organized and focused with TaskNest, the intuitive task manager designed to simplify your life. Effortlessly create to-do lists, set reminders, and track your progress with a clean, distraction-free interface. Powerful features like smart scheduling and seamless cross-device sync help you stay on top of everything that matters. Download TaskNest today and take control of your productivity!"
+  },
+  {
+    "genre": "history-answer",
+    "text": "The fall of the Western Roman Empire in 476 CE was the result of a complex combination of factors rather than a single event. Economic troubles, including heavy taxation and inflation, weakened the state from within. At the same time, military pressures from Germanic tribes and the Huns strained the empire's resources. Political instability, marked by frequent changes in leadership, further undermined effective governance. Together, these challenges created a situation in which the empire could no longer sustain itself."
+  },
+  {
+    "genre": "wedding-toast",
+    "text": "For those who don't know me, I'm Jake, and I've had the incredible privilege of being Tom's best friend for over fifteen years. From late-night study sessions to epic road trips, we've shared countless memories. But nothing compares to the moment he told me he'd met Emily. I knew right then that she was something special. Emily, you bring out the best in him, and together you are truly unstoppable. Please raise your glasses to the happy couple!"
+  },
+  {
+    "genre": "saas-landing",
+    "text": "Meet Relay — the all-in-one platform that transforms how modern teams communicate. Say goodbye to scattered messages and endless email threads. With Relay, conversations, files, and tasks live in one place, so your team can move faster and focus on what matters most. Trusted by over 10,000 companies worldwide, Relay is redefining collaboration for the hybrid era. Get started for free today."
+  },
+  {
+    "genre": "study-tips",
+    "text": "Studying effectively is less about how many hours you put in and more about how you use them. Active recall, where you test yourself instead of rereading notes, is one of the most effective techniques backed by research. Spaced repetition helps move information into long-term memory. It's also important to take regular breaks and get enough sleep, as both play a key role in memory consolidation. By incorporating these strategies, you can study smarter, not harder."
+  },
+  {
+    "genre": "linkedin-hiring",
+    "text": "We're hiring! 🎉\n\nOur team at BrightPath is growing, and we're looking for a Senior Frontend Engineer who is passionate about building beautiful, accessible user experiences.\n\nWhat you'll do:\n👉 Shape the future of our design system\n👉 Collaborate with world-class designers and engineers\n👉 Ship features that impact millions of users\n\nIf this sounds like you, we'd love to hear from you! Link in the comments. 👇"
+  },
+  {
+    "genre": "plain-directions",
+    "text": "From the station, take the north exit and turn left onto Harbour Street. Walk about 200 meters until you reach a pharmacy on the corner. Turn right there, and the office is the third building on your left, a grey brick building with a blue door. Press the buzzer for unit 4. If nobody answers, call the number on the sign by the door."
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Eat no SLOP & Cook no SLOP",
+  "short_name": "no slop",
+  "version": "0.1.0",
+  "description": "One click: blur machine-written text and AI-labelled images as you read, and see the tells in what you write. Scores locally.",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_title": "no slop — click to pause on this site",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "options_page": "options/options.html",
+  "permissions": [
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "src/detector.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/page.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/plexmono-latin-400.woff2"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
+}

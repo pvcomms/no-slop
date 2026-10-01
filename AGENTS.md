@@ -10,7 +10,11 @@ Manifest V3, plain JavaScript, no build step, no runtime dependencies.
 ```
 src/detector.js    pattern tells (pure; content script + node)
 src/model.js       hashed-ngram logistic regression: featurize + probability (pure)
-src/content.js     eat (blur blocks), images, cook (draft chip), right-click card
+src/settings.js    defaults, shared by the page, the worker and options
+src/page/shared.js content-script state, ui kit (shadow dom), the verdict rule decide()
+src/page/eat.js    blur blocks + AI-labelled images, pause / resume, startup
+src/page/cook.js   draft chip — drafts never leave the page
+src/page/check.js  right-click card
 src/background.js  one-click pause, badge, context menu, model scoring, image labels, Pangram
 src/provenance.js  AI-label scan of image bytes (IPTC / C2PA / SD / ComfyUI)
 src/pangram.js     optional Pangram API client (user's key)

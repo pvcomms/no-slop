@@ -19,7 +19,7 @@ const model = M.load((await readFile(join(root, "model/weights.bin"))).buffer, m
 const TH = meta.thresholds;
 const MINW = 40;
 
-// same rule as content.js decide()
+// same rule as src/page/shared.js decide()
 function decide(text, sens) {
   const local = analyze(text, { sensitivity: sens });
   const words = countWords(text);

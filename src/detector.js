@@ -62,18 +62,8 @@
       "unlock potential",
       "say what improves",
     ],
-    [
-      "take (?:it|things|your [a-z]+) to the next level",
-      3,
-      "next level",
-      "say how",
-    ],
-    [
-      "a rich (?:tapestry|history|heritage|blend|array)",
-      3,
-      "a rich …",
-      "be specific",
-    ],
+    ["take (?:it|things|your [a-z]+) to the next level", 3, "next level", "say how"],
+    ["a rich (?:tapestry|history|heritage|blend|array)", 3, "a rich …", "be specific"],
     ["robust", 2, "robust", "strong"],
     ["comprehensive", 2, "comprehensive", "thorough"],
     ["cutting[- ]edge", 2, "cutting-edge", "latest"],
@@ -168,220 +158,199 @@
   ];
 
   const S = "(?:^|[.!?]\\s+|\\n\\s*)"; // sentence start
-  // [id, regex source, flags, weight, cap, label, fix]
+  // w = weight per hit, cap = hits counted at most; every pattern is case-insensitive
   const PHRASES = [
-    [
-      "cutoff",
-      "\\b(?:as an ai(?: language model)?|as a large language model|as of my (?:last|latest) (?:update|knowledge|training)|i (?:don't|do not) have (?:personal (?:opinions|experiences)|access to real[- ]time))",
-      "i",
-      6,
-      2,
-      "model disclaimer",
-      "cut it",
-    ],
-    [
-      "chatbot",
-      "(?:\\bi hope (?:this|that) helps\\b|\\bgreat question\\b|\\bexcellent question\\b|" +
+    {
+      id: "cutoff",
+      label: "model disclaimer",
+      fix: "cut it",
+      w: 6,
+      cap: 2,
+      re: "\\b(?:as an ai(?: language model)?|as a large language model|as of my (?:last|latest) (?:update|knowledge|training)|i (?:don't|do not) have (?:personal (?:opinions|experiences)|access to real[- ]time))",
+    },
+    {
+      id: "chatbot",
+      label: "chatbot tic",
+      fix: "cut it",
+      w: 4,
+      cap: 3,
+      re:
+        "(?:\\bi hope (?:this|that) helps\\b|\\bgreat question\\b|\\bexcellent question\\b|" +
         S +
         "(?:certainly|absolutely|of course)!)",
-      "i",
-      4,
-      3,
-      "chatbot tic",
-      "cut it",
-    ],
-    [
-      "polite",
-      "\\b(?:feel free to (?:reach out|ask|let me know)|(?:please )?don'?t hesitate to (?:reach out|contact|ask|let)|let me know if you (?:have any|need anything|'d like)|happy to help|i hope (?:this|my) (?:email|message|note) finds you well|(?:sincerely |deeply )?apologi[sz]e for any inconvenience|i completely understand how frustrating|we (?:truly|really) value your|i had the pleasure of)\\b",
-      "i",
-      2,
-      3,
-      "boilerplate courtesy",
-      "say the thing",
-    ],
-    [
-      "cliche",
-      "\\b(?:embrace the (?:journey|uncertainty|process|chaos)|the (?:best|truest) version of (?:yourself|myself|ourselves)|you can'?t pour from an empty cup|celebrate (?:the )?small wins|every twist and turn|growth isn'?t linear|(?:a|this|the) new chapter|step(?:ping)? into (?:the new year|this new chapter|my power)|set against the backdrop of|a (?:poignant|powerful|beautifully crafted|thought-provoking|searing|profound|compelling|timely) (?:exploration|meditation|portrait|examination|reminder) of|from the moment (?:you|we|i) (?:step|walk|arrive)|went above and beyond|a must-(?:visit|read|watch|have|try|see)|hidden gem|something for everyone|perfect harmony of|the perfect blend of|key takeaways?|(?:your|my|our|their|the) (?:coding|learning|healing|growth|fitness|career|wellness|entrepreneurial|creative) journey|cut(?:s|ting)? through the noise|at the intersection of)\\b",
-      "i",
-      2,
-      4,
-      "stock phrase",
-      "say it in your own words",
-    ],
-    [
-      "meta",
-      "\\bin this (?:article|guide|post|blog post|piece|video|thread),? (?:we'?ll|we will|i'?ll|i will|you'?ll) (?:explore|delve|walk|dive|look|cover|break|unpack|discuss)|\\(?a thread\\)?\\s*🧵|🧵\\s*👇",
-      "i",
-      3,
-      1,
-      "in this article, we'll explore",
-      "start with the point",
-    ],
-    [
-      "reframe",
-      "\\bnot (?:just|only|merely|simply) (?:about )?[^.!?\\n]{1,80}?,? but (?:also )?",
-      "i",
-      3,
-      3,
-      "not just X, but Y",
-      "say the positive claim",
-    ],
-    [
-      "reframe2",
-      "\\b(?:it'?s not|it is not|this is not|that'?s not|this isn'?t|it isn'?t|that isn'?t|isn'?t|is not|wasn'?t|was not|aren'?t|are not)\\s+(?:just\\s+|only\\s+|merely\\s+|really\\s+)?(?:about\\s+)?[^.!?;:\\n]{1,60}?(?:[,;—–]|\\.\\s+|\\s-\\s)\\s*(?:it'?s|it is|this is|that'?s|they'?re|we'?re|you'?re)\\s+(?:about\\s+)?",
-      "i",
-      3,
-      2,
-      "it's not X — it's Y",
-      "say the positive claim",
-    ],
-    [
-      "steer",
-      "\\bhere'?s (?:the thing|why|what|how|the kicker|the catch|the truth|the secret|where|my take|the deal|the reality)\\b|\\bhere is (?:the thing|why)\\b",
-      "i",
-      2,
-      3,
-      "here's the thing",
-      "just say it",
-    ],
-    [
-      "lets",
-      "\\blet'?s (?:dive|delve|explore|unpack|break (?:it|this|that) down|take a (?:closer )?look|examine|get started|talk about|be honest|be real)\\b",
-      "i",
-      2,
-      3,
-      "let's + verb",
-      "start with the point",
-    ],
-    [
-      "filler",
-      "\\bit(?:'s| is) (?:important|worth|crucial|essential|vital) (?:to note|noting|mentioning|remembering|to remember|to understand|to recognize|to consider)\\b|\\bit(?:'s| is) worth noting\\b|\\bthe reality is(?: that)?\\b",
-      "i",
-      3,
-      3,
-      "it's worth noting",
-      "state the fact",
-    ],
-    [
-      "opening",
-      "\\bin (?:today'?s|the modern|this|our) (?:fast-paced|ever-changing|ever-evolving|rapidly (?:changing|evolving)|digital|increasingly (?:connected|digital|complex)|modern|hyper-connected) (?:world|age|era|landscape|environment|economy|society)\\b|\\bin an (?:era|age|world) (?:where|of|defined by)\\b|\\bin the (?:ever-evolving|rapidly evolving|ever-changing|fast-paced) (?:world|landscape|realm|field) of\\b",
-      "i",
-      3,
-      2,
-      "in today's fast-paced world",
-      "lead with the point",
-    ],
-    [
-      "whether",
-      "\\bwhether you'?re (?:a |an |just )?[^.!?,\\n]{1,40}? or (?:a |an |just |simply )?",
-      "i",
-      2,
-      2,
-      "whether you're X or Y",
-      "pick the reader",
-    ],
-    [
-      "role",
-      "\\bplays? (?:a|an) (?:crucial|pivotal|vital|key|significant|important|critical|central|instrumental|essential) role\\b",
-      "i",
-      2,
-      2,
-      "plays a crucial role",
-      "say what it does",
-    ],
-    [
-      "conclusion",
-      "\\b(?:the future (?:looks|is) bright|only time will tell|one thing is (?:certain|clear)|as we (?:move|look) forward|the possibilities are endless|the sky'?s the limit|in an ever[- ]changing world)\\b",
-      "i",
-      3,
-      2,
-      "generic conclusion",
-      "cut it",
-    ],
-    [
-      "summary",
-      S +
-        "(?:in conclusion|in summary|to summarize|to sum up|all in all|ultimately|overall),",
-      "i",
-      2,
-      2,
-      "in conclusion,",
-      "cut it",
-    ],
-    [
-      "transition",
-      S +
+    },
+    {
+      id: "polite",
+      label: "boilerplate courtesy",
+      fix: "say the thing",
+      w: 2,
+      cap: 3,
+      re: "\\b(?:feel free to (?:reach out|ask|let me know)|(?:please )?don'?t hesitate to (?:reach out|contact|ask|let)|let me know if you (?:have any|need anything|'d like)|happy to help|i hope (?:this|my) (?:email|message|note) finds you well|(?:sincerely |deeply )?apologi[sz]e for any inconvenience|i completely understand how frustrating|we (?:truly|really) value your|i had the pleasure of)\\b",
+    },
+    {
+      id: "cliche",
+      label: "stock phrase",
+      fix: "say it in your own words",
+      w: 2,
+      cap: 4,
+      re: "\\b(?:embrace the (?:journey|uncertainty|process|chaos)|the (?:best|truest) version of (?:yourself|myself|ourselves)|you can'?t pour from an empty cup|celebrate (?:the )?small wins|every twist and turn|growth isn'?t linear|(?:a|this|the) new chapter|step(?:ping)? into (?:the new year|this new chapter|my power)|set against the backdrop of|a (?:poignant|powerful|beautifully crafted|thought-provoking|searing|profound|compelling|timely) (?:exploration|meditation|portrait|examination|reminder) of|from the moment (?:you|we|i) (?:step|walk|arrive)|went above and beyond|a must-(?:visit|read|watch|have|try|see)|hidden gem|something for everyone|perfect harmony of|the perfect blend of|key takeaways?|(?:your|my|our|their|the) (?:coding|learning|healing|growth|fitness|career|wellness|entrepreneurial|creative) journey|cut(?:s|ting)? through the noise|at the intersection of)\\b",
+    },
+    {
+      id: "meta",
+      label: "in this article, we'll explore",
+      fix: "start with the point",
+      w: 3,
+      cap: 1,
+      re: "\\bin this (?:article|guide|post|blog post|piece|video|thread),? (?:we'?ll|we will|i'?ll|i will|you'?ll) (?:explore|delve|walk|dive|look|cover|break|unpack|discuss)|\\(?a thread\\)?\\s*🧵|🧵\\s*👇",
+    },
+    {
+      id: "reframe",
+      label: "not just X, but Y",
+      fix: "say the positive claim",
+      w: 3,
+      cap: 3,
+      re: "\\bnot (?:just|only|merely|simply) (?:about )?[^.!?\\n]{1,80}?,? but (?:also )?",
+    },
+    {
+      id: "reframe2",
+      label: "it's not X — it's Y",
+      fix: "say the positive claim",
+      w: 3,
+      cap: 2,
+      re: "\\b(?:it'?s not|it is not|this is not|that'?s not|this isn'?t|it isn'?t|that isn'?t|isn'?t|is not|wasn'?t|was not|aren'?t|are not)\\s+(?:just\\s+|only\\s+|merely\\s+|really\\s+)?(?:about\\s+)?[^.!?;:\\n]{1,60}?(?:[,;—–]|\\.\\s+|\\s-\\s)\\s*(?:it'?s|it is|this is|that'?s|they'?re|we'?re|you'?re)\\s+(?:about\\s+)?",
+    },
+    {
+      id: "steer",
+      label: "here's the thing",
+      fix: "just say it",
+      w: 2,
+      cap: 3,
+      re: "\\bhere'?s (?:the thing|why|what|how|the kicker|the catch|the truth|the secret|where|my take|the deal|the reality)\\b|\\bhere is (?:the thing|why)\\b",
+    },
+    {
+      id: "lets",
+      label: "let's + verb",
+      fix: "start with the point",
+      w: 2,
+      cap: 3,
+      re: "\\blet'?s (?:dive|delve|explore|unpack|break (?:it|this|that) down|take a (?:closer )?look|examine|get started|talk about|be honest|be real)\\b",
+    },
+    {
+      id: "filler",
+      label: "it's worth noting",
+      fix: "state the fact",
+      w: 3,
+      cap: 3,
+      re: "\\bit(?:'s| is) (?:important|worth|crucial|essential|vital) (?:to note|noting|mentioning|remembering|to remember|to understand|to recognize|to consider)\\b|\\bit(?:'s| is) worth noting\\b|\\bthe reality is(?: that)?\\b",
+    },
+    {
+      id: "opening",
+      label: "in today's fast-paced world",
+      fix: "lead with the point",
+      w: 3,
+      cap: 2,
+      re: "\\bin (?:today'?s|the modern|this|our) (?:fast-paced|ever-changing|ever-evolving|rapidly (?:changing|evolving)|digital|increasingly (?:connected|digital|complex)|modern|hyper-connected) (?:world|age|era|landscape|environment|economy|society)\\b|\\bin an (?:era|age|world) (?:where|of|defined by)\\b|\\bin the (?:ever-evolving|rapidly evolving|ever-changing|fast-paced) (?:world|landscape|realm|field) of\\b",
+    },
+    {
+      id: "whether",
+      label: "whether you're X or Y",
+      fix: "pick the reader",
+      w: 2,
+      cap: 2,
+      re: "\\bwhether you'?re (?:a |an |just )?[^.!?,\\n]{1,40}? or (?:a |an |just |simply )?",
+    },
+    {
+      id: "role",
+      label: "plays a crucial role",
+      fix: "say what it does",
+      w: 2,
+      cap: 2,
+      re: "\\bplays? (?:a|an) (?:crucial|pivotal|vital|key|significant|important|critical|central|instrumental|essential) role\\b",
+    },
+    {
+      id: "conclusion",
+      label: "generic conclusion",
+      fix: "cut it",
+      w: 3,
+      cap: 2,
+      re: "\\b(?:the future (?:looks|is) bright|only time will tell|one thing is (?:certain|clear)|as we (?:move|look) forward|the possibilities are endless|the sky'?s the limit|in an ever[- ]changing world)\\b",
+    },
+    {
+      id: "summary",
+      label: "in conclusion,",
+      fix: "cut it",
+      w: 2,
+      cap: 2,
+      re: S + "(?:in conclusion|in summary|to summarize|to sum up|all in all|ultimately|overall),",
+    },
+    {
+      id: "transition",
+      label: "moreover / furthermore",
+      fix: "and, also",
+      w: 1,
+      cap: 4,
+      re:
+        S +
         "(?:moreover|furthermore|additionally|notably|importantly|interestingly|crucially|consequently)\\b",
-      "gi",
-      1,
-      4,
-      "moreover / furthermore",
-      "and, also",
-    ],
-    [
-      "rhetorical",
-      S +
+    },
+    {
+      id: "rhetorical",
+      label: "the result?",
+      fix: "just say it",
+      w: 2,
+      cap: 3,
+      re:
+        S +
         "(?:the (?:result|answer|catch|kicker|truth|secret|best part|problem|reason|twist|lesson|takeaway|verdict|outcome)|what happened next|sound familiar|the kicker)\\?(?=\\s)",
-      "i",
-      2,
-      3,
-      "the result?",
-      "just say it",
-    ],
-    [
-      "announce",
-      "\\b(?:i'?m|i am|we'?re|we are) (?:thrilled|excited|humbled|hono(?:u)?red|delighted|proud|beyond excited) to (?:announce|share)\\b",
-      "i",
-      3,
-      1,
-      "thrilled to announce",
-      "say what happened",
-    ],
-    [
-      "bait",
-      "\\b(?:let that sink in|read that again|nobody (?:is )?talking about|no one (?:is )?talking about|what nobody tells you|the (?:insight|thing) (?:everyone|nobody)(?:'s| is) missing|drop (?:a|your) [^.\\n]{1,20} (?:below|in the comments)|comment below|follow for more|repost (?:if|to)|♻️)",
-      "i",
-      2,
-      3,
-      "engagement bait",
-      "cut it",
-    ],
-    [
-      "flatline",
-      "\\bwhat (?:surprised|struck|fascinated|excited|amazed) me (?:the )?most\\b|\\bi was (?:fascinated|excited|surprised|amazed) to (?:learn|discover|find|see)\\b",
-      "i",
-      2,
-      2,
-      "what surprised me most",
-      "show it",
-    ],
-    [
-      "attribution",
-      "\\b(?:experts|studies|research|scientists|industry leaders|many people) (?:believe|show|suggest|agree|say)\\b",
-      "i",
-      1,
-      2,
-      "experts believe",
-      "name the source",
-    ],
-    [
-      "step",
-      "\\ba (?:significant|major|crucial|pivotal|bold|big|giant|meaningful|important|critical) step (?:forward|towards?|in the right direction)\\b",
-      "i",
-      2,
-      2,
-      "a significant step forward",
-      "say what changed",
-    ],
-    [
-      "range",
-      "\\band everything in between\\b",
-      "i",
-      2,
-      1,
-      "…and everything in between",
-      "list what you mean",
-    ],
+    },
+    {
+      id: "announce",
+      label: "thrilled to announce",
+      fix: "say what happened",
+      w: 3,
+      cap: 1,
+      re: "\\b(?:i'?m|i am|we'?re|we are) (?:thrilled|excited|humbled|hono(?:u)?red|delighted|proud|beyond excited) to (?:announce|share)\\b",
+    },
+    {
+      id: "bait",
+      label: "engagement bait",
+      fix: "cut it",
+      w: 2,
+      cap: 3,
+      re: "\\b(?:let that sink in|read that again|nobody (?:is )?talking about|no one (?:is )?talking about|what nobody tells you|the (?:insight|thing) (?:everyone|nobody)(?:'s| is) missing|drop (?:a|your) [^.\\n]{1,20} (?:below|in the comments)|comment below|follow for more|repost (?:if|to)|♻️)",
+    },
+    {
+      id: "flatline",
+      label: "what surprised me most",
+      fix: "show it",
+      w: 2,
+      cap: 2,
+      re: "\\bwhat (?:surprised|struck|fascinated|excited|amazed) me (?:the )?most\\b|\\bi was (?:fascinated|excited|surprised|amazed) to (?:learn|discover|find|see)\\b",
+    },
+    {
+      id: "attribution",
+      label: "experts believe",
+      fix: "name the source",
+      w: 1,
+      cap: 2,
+      re: "\\b(?:experts|studies|research|scientists|industry leaders|many people) (?:believe|show|suggest|agree|say)\\b",
+    },
+    {
+      id: "step",
+      label: "a significant step forward",
+      fix: "say what changed",
+      w: 2,
+      cap: 2,
+      re: "\\ba (?:significant|major|crucial|pivotal|bold|big|giant|meaningful|important|critical) step (?:forward|towards?|in the right direction)\\b",
+    },
+    {
+      id: "range",
+      label: "…and everything in between",
+      fix: "list what you mean",
+      w: 2,
+      cap: 1,
+      re: "\\band everything in between\\b",
+    },
   ];
 
   // --- compile once -----------------------------------------------------------
@@ -394,14 +363,7 @@
   }));
   const T2 = TIER2.map((src) => ({ re: wb(src), src }));
   const T3 = TIER3.map((src) => wb(src));
-  const PH = PHRASES.map(([id, src, flags, w, cap, label, fix]) => ({
-    id,
-    re: new RegExp(src, flags.includes("g") ? flags : flags + "g"),
-    w,
-    cap,
-    label,
-    fix,
-  }));
+  const PH = PHRASES.map((p) => ({ ...p, re: new RegExp(p.re, "gi") }));
   const EMOJI_LINE = /^\s*(?:\p{Extended_Pictographic}|[✓✔➡→▶►])️?\s*\S/gmu;
   const BOLD = /\*\*[^*\n]{2,80}\*\*/g;
   const HEADING = /^#{1,3} \S/gm;
@@ -464,40 +426,29 @@
    * }
    */
   function analyze(input, opts) {
-    const sens =
-      SENS[(opts && opts.sensitivity) || "balanced"] || SENS.balanced;
+    const sens = SENS[(opts && opts.sensitivity) || "balanced"] || SENS.balanced;
     const minWords = (opts && opts.minWords) || 0;
     const text = normalize(input);
     const words = countWords(text);
     const empty = { words, raw: 0, density: 0, verdict: "clean", tells: [] };
     if (words < Math.max(8, minWords)) return empty;
-    if (!englishish(text))
-      return Object.assign(empty, { skipped: "not english" });
+    if (!englishish(text)) return Object.assign(empty, { skipped: "not english" });
 
     const tells = [];
     const add = (id, label, count, weight, sample, fix) => {
-      if (count > 0 && weight > 0)
-        tells.push({ id, label, count, weight, sample, fix });
+      if (count > 0 && weight > 0) tells.push({ id, label, count, weight, sample, fix });
     };
 
     for (const t of T1) {
       const hits = matches(t.re, text);
       if (hits.length)
-        add(
-          "w:" + t.label,
-          t.label,
-          hits.length,
-          t.w * Math.min(hits.length, 3),
-          hits[0],
-          t.fix,
-        );
+        add("w:" + t.label, t.label, hits.length, t.w * Math.min(hits.length, 3), hits[0], t.fix);
     }
 
     const t2hits = [];
     for (const t of T2) {
       const hits = matches(t.re, text);
-      if (hits.length)
-        t2hits.push({ word: hits[0].toLowerCase(), n: hits.length });
+      if (hits.length) t2hits.push({ word: hits[0].toLowerCase(), n: hits.length });
     }
     if (t2hits.length >= 2) {
       const n = t2hits.reduce((a, h) => a + Math.min(h.n, 2), 0);
@@ -585,35 +536,18 @@
         "plain sentences",
       );
 
-    const bold = matches(BOLD, text).length;
-    if (bold >= 1)
-      add(
-        "bold",
-        "markdown bold residue",
-        bold,
-        2,
-        matches(BOLD, text)[0],
-        "no bold",
-      );
+    const bold = matches(BOLD, text);
+    if (bold.length) add("bold", "markdown bold residue", bold.length, 2, bold[0], "no bold");
     const heads = matches(HEADING, text).length;
     if (heads >= 1)
-      add(
-        "heading",
-        "markdown heading residue",
-        heads,
-        2,
-        heads + " headings",
-        "no headings",
-      );
+      add("heading", "markdown heading residue", heads, 2, heads + " headings", "no headings");
 
     const lines = text
       .split(/\n+/)
       .map((l) => l.trim())
       .filter(Boolean);
     if (lines.length >= 5) {
-      const short = lines.filter(
-        (l) => countWords(l) <= 14 && sentences(l).length <= 1,
-      ).length;
+      const short = lines.filter((l) => countWords(l) <= 14 && sentences(l).length <= 1).length;
       if (short / lines.length >= 0.75)
         add(
           "broetry",
@@ -628,9 +562,7 @@
     const sl = sentences(text).map(countWords);
     if (sl.length >= 6) {
       const mean = sl.reduce((a, b) => a + b, 0) / sl.length;
-      const sd = Math.sqrt(
-        sl.reduce((a, b) => a + (b - mean) * (b - mean), 0) / sl.length,
-      );
+      const sd = Math.sqrt(sl.reduce((a, b) => a + (b - mean) * (b - mean), 0) / sl.length);
       const cv = sd / mean;
       if (cv < 0.3 && mean >= 11)
         add(
@@ -645,14 +577,7 @@
 
     const triads = matches(TRIAD, text).length;
     if (triads >= 3 && triads / words >= 1 / 70)
-      add(
-        "triad",
-        "rule of three",
-        triads,
-        1,
-        triads + " triads",
-        "two or four",
-      );
+      add("triad", "rule of three", triads, 1, triads + " triads", "two or four");
 
     const raw = tells.reduce((a, t) => a + t.weight, 0);
     const density = (raw * 100) / Math.max(words, 80);

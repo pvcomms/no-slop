@@ -68,9 +68,6 @@ test("the same text is never sent twice", async () => {
 
 test("a failed task and a missing key both throw", async () => {
   const f = fakeFetch([{ stage: "STAGE_FAILED", headline: "too short" }]);
-  await assert.rejects(
-    predict("fails", "k", { fetch: f, pollMs: 1 }),
-    /too short/,
-  );
+  await assert.rejects(predict("fails", "k", { fetch: f, pollMs: 1 }), /too short/);
   await assert.rejects(predict("x", "", { fetch: f }), /no Pangram API key/);
 });

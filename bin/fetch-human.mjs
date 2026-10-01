@@ -24,9 +24,7 @@ const BOOKS = [
 async function gutenberg() {
   const out = [];
   for (const [id, title] of BOOKS) {
-    const r = await fetch(
-      `https://gutenberg.pglaf.org/cache/epub/${id}/pg${id}.txt`,
-    );
+    const r = await fetch(`https://gutenberg.pglaf.org/cache/epub/${id}/pg${id}.txt`);
     if (!r.ok) {
       console.error("skip", title, r.status);
       continue;
@@ -38,12 +36,7 @@ async function gutenberg() {
     const paras = t
       .split(/\r?\n\s*\r?\n/)
       .map((p) => p.replace(/\s+/g, " ").trim())
-      .filter(
-        (p) =>
-          words(p) >= 60 &&
-          words(p) <= 400 &&
-          !/[_*]{2}|CHAPTER|Gutenberg/.test(p),
-      );
+      .filter((p) => words(p) >= 60 && words(p) <= 400 && !/[_*]{2}|CHAPTER|Gutenberg/.test(p));
     const step = Math.max(1, Math.floor(paras.length / 25));
     for (
       let i = 0;
@@ -80,8 +73,7 @@ async function hn() {
     const j = await r.json();
     for (const h of j.hits || []) {
       const text = unhtml(h.comment_text || "");
-      if (words(text) >= 50 && words(text) <= 600)
-        out.push({ source: "hn-2019", text });
+      if (words(text) >= 50 && words(text) <= 600) out.push({ source: "hn-2019", text });
     }
   }
   return out;

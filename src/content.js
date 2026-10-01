@@ -16,19 +16,13 @@
 
   const NS = globalThis.NoSlop;
   const host = location.hostname;
-  const DEFAULTS = {
-    eat: true,
-    sensitivity: "balanced",
-    action: "blur",
-    images: true,
-    cook: true,
-    pangram: "off",
-    paused: {},
-  };
+  const { DEFAULTS } = globalThis.NoSlopSettings;
   let S = Object.assign({}, DEFAULTS);
   let paused = false;
   let thresholds = null; // from the model's meta, via the worker
-  const MINW = 40;
+  const MINW = 40; // below this the model abstains; pattern tells only
+  const MODEL_CHARS = 6000; // text sent to the local model
+  const PANGRAM_CHARS = 20000; // text sent to Pangram (only with a key)
 
   // ---------------------------------------------------------------- ui kit (shadow dom)
   const UI_ATTR = "data-noslop-ui";
@@ -107,6 +101,26 @@
   const pct = (p) => (p == null ? "" : Math.round(p * 100) + "%");
   const send = (msg) => chrome.runtime.sendMessage(msg).catch(() => null);
 
+  // "show" / "hide" for blurred elements
+  function revealButton(els) {
+    const b = h("button", "", "show");
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const hidden = els[0].getAttribute("data-noslop") === "blocked";
+      for (const el of els) el.setAttribute("data-noslop", hidden ? "shown" : "blocked");
+      b.textContent = hidden ? "hide" : "show";
+    });
+    return b;
+  }
+
+  // one tell in the cook panel or the check card
+  function tellRow(t, fix) {
+    const row = h("div", "row");
+    row.append(h("span", "", t.label), h("span", "c", "×" + t.count), h("span", "fix", fix));
+    return row;
+  }
+
   // ---------------------------------------------------------------- what counts as a block
   const ADAPTERS = [
     [/(^|\.)(x|twitter)\.com$/, '[data-testid="tweetText"]'],
@@ -121,14 +135,8 @@
     [/(^|\.)youtube\.com$/, "#content-text"],
     [/(^|\.)ycombinator\.com$/, ".commtext"],
     [/(^|\.)bsky\.app$/, '[data-testid="postText"]'],
-    [
-      /(^|\.)threads\.(net|com)$/,
-      'div[data-pressable-container] span[dir="auto"]',
-    ],
-    [
-      /(^|\.)facebook\.com$/,
-      '[data-ad-preview="message"], [data-ad-comet-preview="message"]',
-    ],
+    [/(^|\.)threads\.(net|com)$/, 'div[data-pressable-container] span[dir="auto"]'],
+    [/(^|\.)facebook\.com$/, '[data-ad-preview="message"], [data-ad-comet-preview="message"]'],
   ];
   const adapter = (ADAPTERS.find(([re]) => re.test(host)) || [])[1];
   const PROSE = "p, li, blockquote, dd, figcaption";
@@ -150,9 +158,7 @@
     if (root.nodeType !== 1) return found;
     if (root.matches && root.matches(SELECTOR)) found.push(root);
     found.push(...root.querySelectorAll(SELECTOR));
-    const leaves = found.filter(
-      (el) => !el.closest(SKIP) && !el.querySelector(SELECTOR),
-    );
+    const leaves = found.filter((el) => !el.closest(SKIP) && !el.querySelector(SELECTOR));
 
     const out = [];
     const shortByParent = new Map();
@@ -160,8 +166,7 @@
       const text = textOf(el);
       if (done.get(el) === text.length) continue;
       const w = NS.countWords(text);
-      if (w >= MINW || (adapter && el.matches(adapter) && w >= 12))
-        out.push({ els: [el], text });
+      if (w >= MINW || (adapter && el.matches(adapter) && w >= 12)) out.push({ els: [el], text });
       else if (w >= 1) {
         const p = el.parentElement;
         if (!p) continue;
@@ -179,27 +184,18 @@
   }
 
   // ---------------------------------------------------------------- verdicts
+  // a block is slop when either the model or the pattern tells say so
   function decide(local, p, words) {
-    const sens = S.sensitivity;
     const t = thresholds || {};
-    const tNow = t[sens];
-    const tStrict = t.strict;
-    const modelSays =
-      p != null && tNow != null && words >= MINW
-        ? p >= tNow
-          ? "slop"
-          : tStrict != null && p >= tStrict
-            ? "suspect"
-            : "clean"
-        : null;
-    if (modelSays === "slop" || local.verdict === "slop") return "slop";
-    if (modelSays === "suspect" || local.verdict === "suspect")
-      return "suspect";
+    let model = null;
+    if (p != null && t[S.sensitivity] != null && words >= MINW) {
+      if (p >= t[S.sensitivity]) model = "slop";
+      else if (t.strict != null && p >= t.strict) model = "suspect";
+      else model = "clean";
+    }
+    if (model === "slop" || local.verdict === "slop") return "slop";
+    if (model === "suspect" || local.verdict === "suspect") return "suspect";
     return "clean";
-  }
-
-  function reasons(local) {
-    return local.tells.slice(0, 3).map((t) => t.label);
   }
 
   function note(unit, verdict) {
@@ -207,26 +203,15 @@
     const n = h("div", "n" + (verdict === "suspect" ? " maybe" : ""));
     n.append(h("span", "tag", verdict === "slop" ? "slop" : "maybe slop"));
     // show the model's number only when the model is part of the reason
-    if (unit.p != null && thresholds && unit.p >= thresholds.strict) n.append(h("span", "p", pct(unit.p) + " machine"));
-    const why = reasons(unit.local);
+    if (unit.p != null && thresholds && unit.p >= thresholds.strict)
+      n.append(h("span", "p", pct(unit.p) + " machine"));
+    const why = unit.local.tells.slice(0, 3).map((t) => t.label);
     if (why.length) n.append(h("span", "why", why.join(" · ")));
     const pg = h("span", "pg");
     n.append(pg);
     n.title =
-      unit.local.tells.map((t) => `${t.label} — “${t.sample}”`).join("\n") ||
-      "scored by the model";
-    if (verdict === "slop" && S.action === "blur") {
-      const b = h("button", "", "show");
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const hidden = unit.els[0].getAttribute("data-noslop") === "blocked";
-        for (const el of unit.els)
-          el.setAttribute("data-noslop", hidden ? "shown" : "blocked");
-        b.textContent = hidden ? "hide" : "show";
-      });
-      n.append(b);
-    }
+      unit.local.tells.map((t) => `${t.label} — “${t.sample}”`).join("\n") || "scored by the model";
+    if (verdict === "slop" && S.action === "blur") n.append(revealButton(unit.els));
     root.append(n);
     unit.pg = pg;
     return hostEl;
@@ -236,31 +221,25 @@
     const verdict = decide(unit.local, unit.p, unit.words);
     unit.verdict = verdict;
     if (verdict === "clean") return;
-    const state =
-      verdict === "slop" && S.action === "blur" ? "blocked" : "labelled";
+    const state = verdict === "slop" && S.action === "blur" ? "blocked" : "labelled";
     for (const el of unit.els) el.setAttribute("data-noslop", state);
     unit.note = note(unit, verdict);
     unit.els[0].prepend(unit.note);
     count();
-    if (verdict === "slop" && S.pangram === "confirm" && unit.words >= 50)
-      confirm(unit);
+    if (verdict === "slop" && S.pangram === "confirm" && unit.words >= 50) confirmWithPangram(unit);
   }
 
-  async function confirm(unit) {
+  async function confirmWithPangram(unit) {
     unit.pg.textContent = "pangram …";
     const r = await send({
       t: "pangram",
-      text: unit.text.slice(0, 20000),
+      text: unit.text.slice(0, PANGRAM_CHARS),
       why: "confirm",
     });
     if (!r || r.skipped) return (unit.pg.textContent = "");
     if (r.error) return (unit.pg.textContent = "pangram unavailable");
     unit.pg.textContent = "";
-    unit.pg.append(
-      "pangram ",
-      h("b", "", r.label || "?"),
-      " " + pct(r.ai + r.assisted),
-    );
+    unit.pg.append("pangram ", h("b", "", r.label || "?"), " " + pct(r.ai + r.assisted));
     if (/human/i.test(r.label)) {
       for (const el of unit.els) el.setAttribute("data-noslop", "labelled");
       unit.verdict = "suspect";
@@ -270,8 +249,7 @@
 
   function count() {
     let n = 0;
-    for (const u of units.values())
-      if (u.verdict === "slop" && u.els[0].isConnected) n++;
+    for (const u of units.values()) if (u.verdict === "slop" && u.els[0].isConnected) n++;
     send({ t: "count", n, paused: false });
   }
 
@@ -289,12 +267,9 @@
     const roots = [...pending];
     pending.clear();
     const batch = [];
-    for (const r of roots)
-      if (r && r.isConnected) for (const u of collect(r)) batch.push(u);
+    for (const r of roots) if (r && r.isConnected) for (const u of collect(r)) batch.push(u);
     const seen = new Set();
-    const fresh = batch.filter((u) =>
-      seen.has(u.els[0]) ? false : (seen.add(u.els[0]), true),
-    );
+    const fresh = batch.filter((u) => (seen.has(u.els[0]) ? false : (seen.add(u.els[0]), true)));
     if (!fresh.length) return;
     for (const u of fresh) {
       u.id = nextId++;
@@ -307,7 +282,7 @@
       t: "score",
       items: fresh
         .filter((u) => u.words >= MINW)
-        .map((u) => ({ id: u.id, text: u.text.slice(0, 6000) })),
+        .map((u) => ({ id: u.id, text: u.text.slice(0, MODEL_CHARS) })),
     });
     if (res && res.thresholds) thresholds = res.thresholds;
     const byId = new Map(((res && res.items) || []).map((x) => [x.id, x.p]));
@@ -346,34 +321,14 @@
   async function checkImage(img) {
     const url = img.currentSrc || img.src;
     if (!url || !/^https?:/.test(url)) return;
-    if (
-      (img.naturalWidth || img.width) < 200 ||
-      (img.naturalHeight || img.height) < 200
-    )
-      return;
+    if ((img.naturalWidth || img.width) < 200 || (img.naturalHeight || img.height) < 200) return;
     const r = await send({ t: "img", url });
     if (!r || !r.ai || paused) return;
-    img.setAttribute(
-      "data-noslop",
-      S.action === "blur" ? "blocked" : "labelled",
-    );
+    img.setAttribute("data-noslop", S.action === "blur" ? "blocked" : "labelled");
     const { hostEl, root } = shadowHost("span");
     const n = h("div", "n");
-    n.append(
-      h("span", "tag", "ai image"),
-      h("span", "why", r.kind + " · " + r.source),
-    );
-    if (S.action === "blur") {
-      const b = h("button", "", "show");
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const hidden = img.getAttribute("data-noslop") === "blocked";
-        img.setAttribute("data-noslop", hidden ? "shown" : "blocked");
-        b.textContent = hidden ? "hide" : "show";
-      });
-      n.append(b);
-    }
+    n.append(h("span", "tag", "ai image"), h("span", "why", r.kind + " · " + r.source));
+    if (S.action === "blur") n.append(revealButton([img]));
     root.append(n);
     img.before(hostEl);
     units.set(nextId++, { els: [img], verdict: "slop", note: hostEl });
@@ -417,8 +372,7 @@
     if (area !== "sync") return;
     for (const k of Object.keys(changes)) S[k] = changes[k].newValue;
     clearAll();
-    for (const el of document.querySelectorAll("[data-noslop]"))
-      el.removeAttribute("data-noslop");
+    for (const el of document.querySelectorAll("[data-noslop]")) el.removeAttribute("data-noslop");
     mo.disconnect();
     // forget what was scored so everything is judged again under the new settings
     for (const el of document.querySelectorAll(SELECTOR)) done.delete(el);
@@ -431,9 +385,7 @@
     if (!t || t.nodeType !== 1) return null;
     if (t.tagName === "TEXTAREA") return t;
     if (t.tagName === "INPUT") return null;
-    return t.closest(
-      '[contenteditable=""], [contenteditable="true"], [role="textbox"]',
-    );
+    return t.closest('[contenteditable=""], [contenteditable="true"], [role="textbox"]');
   }
   function cookText(el) {
     return el.tagName === "TEXTAREA" ? el.value : el.innerText || "";
@@ -460,8 +412,7 @@
     chip.addEventListener("click", toggle);
     chip.addEventListener(
       "keydown",
-      (e) =>
-        (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle()),
+      (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle()),
     );
     cook = { hostEl, chip, v, panel, el: null, t: 0, r: null };
     return cook;
@@ -471,10 +422,7 @@
     if (!cook || !cook.el || !cook.el.isConnected) return;
     const rc = cook.el.getBoundingClientRect();
     const cw = cook.chip.offsetWidth || 90;
-    const x = Math.max(
-      8,
-      Math.min(window.innerWidth - cw - 8, rc.right - cw - 8),
-    );
+    const x = Math.max(8, Math.min(window.innerWidth - cw - 8, rc.right - cw - 8));
     const y = Math.max(8, Math.min(window.innerHeight - 34, rc.bottom - 30));
     cook.chip.style.left = x + "px";
     cook.chip.style.top = y + "px";
@@ -484,9 +432,7 @@
         Math.max(8, Math.min(window.innerWidth - pw - 8, rc.right - pw)) + "px";
       const ph = cook.panel.offsetHeight || 200;
       cook.panel.style.top =
-        (y - ph - 8 > 8
-          ? y - ph - 8
-          : Math.min(window.innerHeight - ph - 8, y + 30)) + "px";
+        (y - ph - 8 > 8 ? y - ph - 8 : Math.min(window.innerHeight - ph - 8, y + 30)) + "px";
     }
   }
 
@@ -504,18 +450,8 @@
     c.chip.classList.toggle("clean", n === 0);
     c.v.textContent = n === 0 ? "no tells" : n + (n === 1 ? " tell" : " tells");
     c.panel.textContent = "";
-    if (n === 0)
-      c.panel.append(
-        h("div", "why", "Nothing on the list. Read it aloud anyway."),
-      );
-    for (const t of r.tells) {
-      const row = h("div", "row");
-      row.append(h("span", "", t.label), h("span", "c", "×" + t.count));
-      row.append(
-        h("span", "fix", "“" + t.sample + "” → " + (t.fix || "rewrite")),
-      );
-      c.panel.append(row);
-    }
+    if (n === 0) c.panel.append(h("div", "why", "Nothing on the list. Read it aloud anyway."));
+    for (const t of r.tells) c.panel.append(tellRow(t, `“${t.sample}” → ${t.fix || "rewrite"}`));
     c.chip.classList.add("on");
     place();
   }
@@ -548,26 +484,17 @@
     (e) => {
       if (!cook || editable(e.target) !== cook.el) return;
       setTimeout(() => {
-        if (
-          document.activeElement &&
-          editable(document.activeElement) === cook.el
-        )
-          return;
+        if (document.activeElement && editable(document.activeElement) === cook.el) return;
         if (cook.panel.hidden) cook.chip.classList.remove("on");
       }, 200);
     },
     true,
   );
-  window.addEventListener(
-    "scroll",
-    () => cook && requestAnimationFrame(place),
-    { passive: true, capture: true },
-  );
-  window.addEventListener(
-    "resize",
-    () => cook && requestAnimationFrame(place),
-    { passive: true },
-  );
+  window.addEventListener("scroll", () => cook && requestAnimationFrame(place), {
+    passive: true,
+    capture: true,
+  });
+  window.addEventListener("resize", () => cook && requestAnimationFrame(place), { passive: true });
 
   // ---------------------------------------------------------------- check selection
   let card = null;
@@ -596,13 +523,12 @@
     const local = NS.analyze(text, { sensitivity: S.sensitivity });
     const res = await send({
       t: "score",
-      items: [{ id: 0, text: text.slice(0, 6000) }],
+      items: [{ id: 0, text: text.slice(0, MODEL_CHARS) }],
     });
     if (res && res.thresholds) thresholds = res.thresholds;
     const p = res && res.items && res.items[0] ? res.items[0].p : null;
     const v = decide(local, p, local.words);
-    verdictEl.textContent =
-      v === "slop" ? "slop" : v === "suspect" ? "maybe slop" : "reads human";
+    verdictEl.textContent = v === "slop" ? "slop" : v === "suspect" ? "maybe slop" : "reads human";
     verdictEl.className = "verdict " + v;
     meta.textContent = [
       local.words + " words",
@@ -614,24 +540,15 @@
     ]
       .filter(Boolean)
       .join(" · ");
-    for (const t of local.tells.slice(0, 6)) {
-      const row = h("div", "row");
-      row.append(
-        h("span", "", t.label),
-        h("span", "c", "×" + t.count),
-        h("span", "fix", "“" + t.sample + "”"),
-      );
-      list.append(row);
-    }
+    for (const t of local.tells.slice(0, 6)) list.append(tellRow(t, `“${t.sample}”`));
     if (S.pangram !== "off" && local.words >= 50) {
       pg.textContent = "pangram …";
       const r = await send({
         t: "pangram",
-        text: text.slice(0, 20000),
+        text: text.slice(0, PANGRAM_CHARS),
         why: "selection",
       });
-      if (!r || r.skipped)
-        pg.textContent = "add a Pangram key in options for a second opinion";
+      if (!r || r.skipped) pg.textContent = "add a Pangram key in options for a second opinion";
       else if (r.error) pg.textContent = "pangram: " + r.error;
       else {
         pg.textContent = "";

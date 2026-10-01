@@ -37,10 +37,7 @@ test("composite label → partly generated", () => {
 });
 
 test("C2PA manifest naming a generator → generated; without one → just credentials", () => {
-  assert.equal(
-    scan(bytes("jumb c2pa.claim claim_generator: OpenAI-API")).ai,
-    true,
-  );
+  assert.equal(scan(bytes("jumb c2pa.claim claim_generator: OpenAI-API")).ai, true);
   const cam = scan(bytes("jumb c2pa.claim claim_generator: Leica M11-P"));
   assert.equal(cam.ai, false);
   assert.equal(cam.kind, "content credentials");
@@ -48,11 +45,7 @@ test("C2PA manifest naming a generator → generated; without one → just crede
 
 test("Stable Diffusion and ComfyUI PNG text chunks", () => {
   assert.equal(
-    scan(
-      bytes(
-        "tEXtparameters\0a castle, Steps: 30, Sampler: DPM++ 2M, CFG scale: 7",
-      ),
-    ).source,
+    scan(bytes("tEXtparameters\0a castle, Steps: 30, Sampler: DPM++ 2M, CFG scale: 7")).source,
     "stable diffusion metadata",
   );
   assert.equal(

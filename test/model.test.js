@@ -5,8 +5,7 @@ const { join } = require("node:path");
 const M = require("../src/model.js");
 
 const dir = join(__dirname, "..", "model");
-const built =
-  existsSync(join(dir, "meta.json")) && existsSync(join(dir, "weights.bin"));
+const built = existsSync(join(dir, "meta.json")) && existsSync(join(dir, "weights.bin"));
 
 test("fnv-1a matches the reference values", () => {
   assert.equal(M.fnv(""), 0x811c9dc5);
@@ -34,12 +33,7 @@ test(
     const meta = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8"));
     const js = [...M.featurize(meta.probe.text)].sort((a, b) => a - b);
     assert.deepEqual(js, meta.probe.features);
-    const model = M.load(
-      readFileSync(join(dir, "weights.bin")).buffer.slice(0),
-      meta,
-    );
-    assert.ok(
-      Math.abs(M.probability(model, meta.probe.text) - meta.probe.p) < 1e-4,
-    );
+    const model = M.load(readFileSync(join(dir, "weights.bin")).buffer.slice(0), meta);
+    assert.ok(Math.abs(M.probability(model, meta.probe.text) - meta.probe.p) < 1e-4);
   },
 );

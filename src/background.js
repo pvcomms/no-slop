@@ -8,31 +8,17 @@
   · checks image provenance labels (src/provenance.js)
   · talks to Pangram only when the user set a key and a Pangram mode (src/pangram.js)
 */
-importScripts("model.js", "pangram.js", "provenance.js");
+importScripts("settings.js", "model.js", "pangram.js", "provenance.js");
 
-const DEFAULTS = {
-  eat: true,
-  sensitivity: "balanced",
-  action: "blur",
-  images: true,
-  cook: true,
-  pangram: "off", // off | selection | confirm
-  paused: {},
-};
+const { DEFAULTS } = NoSlopSettings;
 const CORAL = "#e07a6b";
 const GREY = "#66635a";
-
-// ---- settings --------------------------------------------------------------------------
-async function settings() {
-  const s = await chrome.storage.sync.get(DEFAULTS);
-  return Object.assign({}, DEFAULTS, s);
-}
+const IMG_BYTES = 384 * 1024; // labels sit in the first few hundred KB of a file
 
 chrome.runtime.onInstalled.addListener(async () => {
   const s = await chrome.storage.sync.get(null);
   const missing = {};
-  for (const k of Object.keys(DEFAULTS))
-    if (!(k in s)) missing[k] = DEFAULTS[k];
+  for (const k of Object.keys(DEFAULTS)) if (!(k in s)) missing[k] = DEFAULTS[k];
   if (Object.keys(missing).length) await chrome.storage.sync.set(missing);
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
@@ -50,9 +36,7 @@ function model() {
     modelP = (async () => {
       const [meta, buf] = await Promise.all([
         fetch(chrome.runtime.getURL("model/meta.json")).then((r) => r.json()),
-        fetch(chrome.runtime.getURL("model/weights.bin")).then((r) =>
-          r.arrayBuffer(),
-        ),
+        fetch(chrome.runtime.getURL("model/weights.bin")).then((r) => r.arrayBuffer()),
       ]);
       return NoSlopModel.load(buf, meta);
     })().catch((e) => {
@@ -88,7 +72,7 @@ async function paint(tabId, n, paused) {
 chrome.action.onClicked.addListener(async (tab) => {
   const host = hostOf(tab.url || "");
   if (!host) return;
-  const s = await settings();
+  const s = await NoSlopSettings.load();
   const paused = Object.assign({}, s.paused);
   if (paused[host]) delete paused[host];
   else paused[host] = Date.now();
@@ -136,12 +120,12 @@ async function checkImage(url) {
   let out = { ai: false, kind: "unreadable", source: "" };
   try {
     const r = await fetch(url, {
-      headers: { Range: "bytes=0-393215" },
+      headers: { Range: `bytes=0-${IMG_BYTES - 1}` },
       credentials: "include",
     });
     if (r.ok || r.status === 206) {
       const buf = new Uint8Array(await r.arrayBuffer());
-      out = NoSlopProvenance.scan(buf.subarray(0, 393216));
+      out = NoSlopProvenance.scan(buf.subarray(0, IMG_BYTES));
     }
   } catch (e) {
     out.kind = "fetch failed";
@@ -179,13 +163,12 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       case "img":
         return checkImage(msg.url);
       case "pangram": {
-        const s = await settings();
+        const s = await NoSlopSettings.load();
         const { pangramKey } = await chrome.storage.local.get({
           pangramKey: "",
         });
         if (!pangramKey || s.pangram === "off") return { skipped: true };
-        if (msg.why === "confirm" && s.pangram !== "confirm")
-          return { skipped: true };
+        if (msg.why === "confirm" && s.pangram !== "confirm") return { skipped: true };
         try {
           return await NoSlopPangram.predict(msg.text, pangramKey);
         } catch (e) {

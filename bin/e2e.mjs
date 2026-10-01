@@ -41,11 +41,7 @@ async function findChrome() {
 const types = { ".html": "text/html", ".png": "image/png" };
 const server = createServer(async (req, res) => {
   try {
-    const p = join(
-      root,
-      "test/pages",
-      decodeURIComponent(new URL(req.url, "http://x").pathname),
-    );
+    const p = join(root, "test/pages", decodeURIComponent(new URL(req.url, "http://x").pathname));
     const body = await readFile(p);
     res.writeHead(200, {
       "content-type": types[extname(p)] || "application/octet-stream",
@@ -79,13 +75,10 @@ let port;
 for (let i = 0; i < 100 && !port; i++) {
   await sleep(100);
   try {
-    port = (await readFile(join(profile, "DevToolsActivePort"), "utf8")).split(
-      "\n",
-    )[0];
+    port = (await readFile(join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0];
   } catch {}
 }
-const http = (path, init) =>
-  fetch(`http://127.0.0.1:${port}${path}`, init).then((r) => r.json());
+const http = (path, init) => fetch(`http://127.0.0.1:${port}${path}`, init).then((r) => r.json());
 
 class CDP {
   static async open(url) {
@@ -117,9 +110,7 @@ class CDP {
       returnByValue: true,
     });
     if (r.exceptionDetails)
-      throw new Error(
-        r.exceptionDetails.exception?.description || r.exceptionDetails.text,
-      );
+      throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
     return r.result.value;
   }
   close() {
@@ -138,8 +129,7 @@ try {
   let sw;
   for (let i = 0; i < 60 && !sw; i++) {
     sw = (await http("/json/list")).find(
-      (t) =>
-        t.type === "service_worker" && t.url.endsWith("/src/background.js"),
+      (t) => t.type === "service_worker" && t.url.endsWith("/src/background.js"),
     );
     if (!sw) await sleep(200);
   }
@@ -181,8 +171,7 @@ try {
         ? n.nodeValue
         : n.nodeName === "STYLE"
           ? ""
-          : (n.children || []).map(text).join(" ") +
-            (n.shadowRoots || []).map(text).join(" ");
+          : (n.children || []).map(text).join(" ") + (n.shadowRoots || []).map(text).join(" ");
     (function walk(n, parentId) {
       const attrs = n.attributes || [];
       const idIx = attrs.indexOf("id");
@@ -190,11 +179,7 @@ try {
       if (attrs.includes("data-noslop-ui"))
         out.push({
           at: parentId,
-          text: (n.shadowRoots || [])
-            .map(text)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim(),
+          text: (n.shadowRoots || []).map(text).join(" ").replace(/\s+/g, " ").trim(),
           nodeId: n.nodeId,
           n,
         });
@@ -212,25 +197,15 @@ try {
   check("human prose (Walden) left alone", s.h1 === null, String(s.h1));
   check("human forum reply left alone", s.h2 === null, String(s.h2));
   check("blog-intro slop blurred", s.a1 === "blocked", String(s.a1));
-  check(
-    "one-line-per-paragraph post blurred as one block",
-    s.a3 === "blocked",
-    String(s.a3),
-  );
+  check("one-line-per-paragraph post blurred as one block", s.a3 === "blocked", String(s.a3));
   check("slop added after load is caught", s.a4 === "blocked", String(s.a4));
   check(
     "image labelled trainedAlgorithmicMedia blurred",
     s["img-ai"] === "blocked",
     String(s["img-ai"]),
   );
-  check(
-    "unlabelled image left alone",
-    s["img-plain"] === null,
-    String(s["img-plain"]),
-  );
-  console.log(
-    `  (info) plain assistant answer with no pattern tells: ${s.a2 || "not flagged"}`,
-  );
+  check("unlabelled image left alone", s["img-plain"] === null, String(s["img-plain"]));
+  console.log(`  (info) plain assistant answer with no pattern tells: ${s.a2 || "not flagged"}`);
 
   const ns = await notes();
   const a1note = ns.find((n) => n.at === "a1");
@@ -242,11 +217,7 @@ try {
 
   const errs = pg.events
     .filter((e) => e.method === "Runtime.exceptionThrown")
-    .map(
-      (e) =>
-        e.params.exceptionDetails.exception?.description ||
-        e.params.exceptionDetails.text,
-    );
+    .map((e) => e.params.exceptionDetails.exception?.description || e.params.exceptionDetails.text);
   check("no exceptions on the page", errs.length === 0, errs.join(" | "));
 
   const shot = async (name, full = false) => {
@@ -331,7 +302,11 @@ try {
   })()`);
   await sleep(1500);
   const cardNote = (await notes()).find((n) => /words/.test(n.text) && /close/.test(n.text));
-  check("right-click check shows a verdict card", !!cardNote && /slop/.test(cardNote.text), cardNote ? cardNote.text.slice(0, 100) : "no card");
+  check(
+    "right-click check shows a verdict card",
+    !!cardNote && /slop/.test(cardNote.text),
+    cardNote ? cardNote.text.slice(0, 100) : "no card",
+  );
   await shot("card.png");
 
   // one click = pause this site (the action handler writes storage.sync.paused[host])
@@ -359,14 +334,8 @@ try {
   const oc = await CDP.open(opt.webSocketDebuggerUrl);
   await oc.send("Page.enable");
   await sleep(1200);
-  const modelLine = await oc.eval(
-    `document.getElementById("model").textContent`,
-  );
-  check(
-    "options page shows the model line",
-    /local model · trained/.test(modelLine),
-    modelLine,
-  );
+  const modelLine = await oc.eval(`document.getElementById("model").textContent`);
+  check("options page shows the model line", /local model · trained/.test(modelLine), modelLine);
   const m = await oc.send("Page.getLayoutMetrics");
   const { data } = await oc.send("Page.captureScreenshot", {
     format: "png",
@@ -382,9 +351,7 @@ try {
   await writeFile(join(outDir, "options.png"), Buffer.from(data, "base64"));
   oc.close();
 
-  const swErrs = swc.events.filter(
-    (e) => e.method === "Runtime.exceptionThrown",
-  );
+  const swErrs = swc.events.filter((e) => e.method === "Runtime.exceptionThrown");
   check(
     "no exceptions in the service worker",
     swErrs.length === 0,
@@ -400,7 +367,5 @@ try {
 }
 
 const failed = results.filter((r) => !r.ok).length;
-console.log(
-  `\n${results.length - failed}/${results.length} passed · screenshots in ${outDir}`,
-);
+console.log(`\n${results.length - failed}/${results.length} passed · screenshots in ${outDir}`);
 process.exit(failed ? 1 : 0);

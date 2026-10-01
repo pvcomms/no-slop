@@ -35,6 +35,7 @@
         "https://*/*"
       ],
       "js": [
+        "src/settings.js",
         "src/detector.js",
         "src/content.js"
       ],

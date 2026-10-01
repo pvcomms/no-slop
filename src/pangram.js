@@ -40,10 +40,7 @@
         public_dashboard_link: false,
       }),
     });
-    if (!r.ok)
-      throw new Error(
-        "pangram " + r.status + ": " + (await r.text()).slice(0, 160),
-      );
+    if (!r.ok) throw new Error("pangram " + r.status + ": " + (await r.text()).slice(0, 160));
     const { task_id } = await r.json();
     if (!task_id) throw new Error("pangram: no task_id");
     const deadline = Date.now() + o.timeoutMs;
@@ -55,9 +52,7 @@
       if (!g.ok) continue;
       const d = await g.json();
       if (d.stage === "STAGE_FAILED")
-        throw new Error(
-          "pangram: " + (d.headline || d.detail || "task failed"),
-        );
+        throw new Error("pangram: " + (d.headline || d.detail || "task failed"));
       if (d.stage === "STAGE_SUCCESS") {
         const out = {
           label: d.prediction_short || "",

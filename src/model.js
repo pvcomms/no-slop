@@ -13,8 +13,7 @@
   const BITS = 18;
   const MASK = (1 << BITS) - 1;
   const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
-  const TOKEN =
-    /[a-z0-9]+(?:'[a-z]+)?|[—–!?;:,.()"…¶]|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
+  const TOKEN = /[a-z0-9]+(?:'[a-z]+)?|[—–!?;:,.()"…¶]|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
   const MAX_TOKENS = 600;
   const enc = new TextEncoder();
 

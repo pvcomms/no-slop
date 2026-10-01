@@ -46,9 +46,7 @@
   }
 
   function scan(bytes) {
-    const s = ascii(
-      bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
-    );
+    const s = ascii(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
     const c2pa = /c2pa|jumb|cai:/i.test(s);
     if (s.includes("compositeWithTrainedAlgorithmicMedia"))
       return {

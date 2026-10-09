@@ -2,6 +2,7 @@
 // Score every held-out set with the extension's own decision: pattern tells (src/detector.js)
 // OR the local model (src/model.js + model/weights.bin), per sensitivity. Nothing here was
 // trained on. Sets come from test/fixtures/.cache/heldout.jsonl, written by bin/train.py.
+//   NOSLOP_MODEL=<dir>  score a model built elsewhere (default: model/)
 //   --misses   AI texts the extension would let through (balanced)
 //   --worst    human texts it would wrongly blur (balanced)
 import { readFile } from "node:fs/promises";
@@ -14,8 +15,9 @@ const req = createRequire(import.meta.url);
 const { analyze, countWords } = req("../src/detector.js");
 const M = req("../src/model.js");
 const root = join(here, "..");
-const meta = JSON.parse(await readFile(join(root, "model/meta.json"), "utf8"));
-const model = M.load((await readFile(join(root, "model/weights.bin"))).buffer, meta);
+const mdir = process.env.NOSLOP_MODEL || join(root, "model");
+const meta = JSON.parse(await readFile(join(mdir, "meta.json"), "utf8"));
+const model = M.load((await readFile(join(mdir, "weights.bin"))).buffer, meta);
 const TH = meta.thresholds;
 const MINW = 40;
 

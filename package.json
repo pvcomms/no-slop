@@ -1,7 +1,7 @@
 {
   "name": "no-slop",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Eat no SLOP & Cook no SLOP — a browser extension that blurs machine-written text and AI-labelled images, and shows the tells in what you write.",
   "scripts": {
     "test": "node --test 'test/*.test.js'",

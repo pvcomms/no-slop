@@ -18,7 +18,7 @@ src/page/check.js  right-click card
 src/background.js  one-click pause, badge, context menu, model scoring, image labels, Pangram
 src/provenance.js  AI-label scan of image bytes (IPTC / C2PA / SD / ComfyUI)
 src/pangram.js     optional Pangram API client (user's key)
-model/             weights.bin (int8, 2^18) + meta.json (scale, bias, thresholds) — built by bin/train.py
+model/             weights.bin (int8, 2^17) + meta.json (bits, scale, bias, thresholds) — built by bin/train.py
 options/           settings page
 ```
 
@@ -34,6 +34,10 @@ python3 bin/icons.py          # redraw icons
 
 ## Invariants
 
+- **Light on every page.** The content script reads `textContent` to decide what to score and
+  `innerText` only for blocks it will score; one constructable stylesheet is shared by every
+  note; the mono font loads on first draw, not on load; a settings change that doesn't touch
+  this host (pausing another site) does not rescan. Keep it that way.
 - **featurize must match.** `src/model.js` and `bin/train.py` tokenize and hash identically;
   `test/model.test.js` checks a probe string against the trainer's output. Change both or neither.
 - **Drafts never leave the page.** Cook mode scores in the content script only — no messages

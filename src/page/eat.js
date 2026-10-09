@@ -41,22 +41,27 @@
   const units = new Map(); // id → unit
   let nextId = 1;
 
+  // textContent costs nothing; innerText forces layout, so it is read only for blocks that
+  // will actually be scored (it keeps the line breaks the detector reads)
+  const cheap = (el) => (el.textContent || "").trim();
   const textOf = (el) => (el.innerText || el.textContent || "").trim();
 
   function collect(root) {
     const found = [];
     if (root.nodeType !== 1) return found;
     if (root.matches && root.matches(SELECTOR)) found.push(root);
-    found.push(...root.querySelectorAll(SELECTOR));
+    const all = root.querySelectorAll(SELECTOR);
+    for (let i = 0; i < all.length; i++) found.push(all[i]);
     const leaves = found.filter((el) => !el.closest(SKIP) && !el.querySelector(SELECTOR));
 
     const out = [];
     const shortByParent = new Map();
     for (const el of leaves) {
-      const text = textOf(el);
-      if (done.get(el) === text.length) continue;
-      const w = NS.countWords(text);
-      if (w >= MINW || (adapter && el.matches(adapter) && w >= 12)) out.push({ els: [el], text });
+      const raw = cheap(el);
+      if (done.get(el) === raw.length) continue;
+      const w = NS.countWords(raw);
+      if (w >= MINW || (adapter && el.matches(adapter) && w >= 12))
+        out.push({ els: [el], text: textOf(el) });
       else if (w >= 1) {
         const p = el.parentElement;
         if (!p) continue;
@@ -67,7 +72,7 @@
     // runs of short paragraphs under one parent read as one block (e.g. one-line-per-paragraph posts)
     for (const els of shortByParent.values()) {
       if (els.length < 3) continue;
-      const text = els.map(textOf).join("\n");
+      const text = els.map(cheap).join("\n");
       if (NS.countWords(text) >= MINW) out.push({ els, text });
     }
     return out;
@@ -132,19 +137,28 @@
 
   // ---------------------------------------------------------------- scanning
   const pending = new Set();
+  const MAX_ROOTS = 40; // past this, one walk of the body is cheaper than many small ones
   let timer = 0;
   function schedule(root) {
     if (P.paused || !P.S.eat) return;
-    pending.add(root || document.body);
+    root = root || document.body;
+    if (!pending.has(document.body)) {
+      if (pending.size >= MAX_ROOTS) {
+        pending.clear();
+        pending.add(document.body);
+      } else pending.add(root);
+    }
     clearTimeout(timer);
     timer = setTimeout(flush, 350);
   }
 
   async function flush() {
-    const roots = [...pending];
+    const all = [...pending].filter((r) => r && r.isConnected);
     pending.clear();
+    // a root inside another pending root would be walked twice
+    const roots = all.filter((r) => !all.some((o) => o !== r && o.contains(r)));
     const batch = [];
-    for (const r of roots) if (r && r.isConnected) for (const u of collect(r)) batch.push(u);
+    for (const r of roots) for (const u of collect(r)) batch.push(u);
     const seen = new Set();
     const fresh = batch.filter((u) => (seen.has(u.els[0]) ? false : (seen.add(u.els[0]), true)));
     if (!fresh.length) return;
@@ -152,7 +166,7 @@
       u.id = nextId++;
       u.words = NS.countWords(u.text);
       u.local = NS.analyze(u.text, { sensitivity: P.S.sensitivity });
-      for (const el of u.els) done.set(el, textOf(el).length);
+      for (const el of u.els) done.set(el, cheap(el).length);
       units.set(u.id, u);
     }
     const res = await send({
@@ -247,7 +261,20 @@
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
-    for (const k of Object.keys(changes)) P.S[k] = changes[k].newValue;
+    // only a change that affects this page is worth a rescan: pausing another site is not
+    let relevant = false;
+    for (const k of Object.keys(changes)) {
+      const v = changes[k].newValue;
+      if (k === "paused") {
+        const was = !!(P.S.paused && P.S.paused[host]);
+        P.S.paused = v || {};
+        if (was !== !!P.S.paused[host]) relevant = true;
+      } else {
+        if (P.S[k] !== v) relevant = true;
+        P.S[k] = v;
+      }
+    }
+    if (!relevant) return;
     clearAll();
     for (const el of document.querySelectorAll("[data-noslop]")) el.removeAttribute("data-noslop");
     mo.disconnect();

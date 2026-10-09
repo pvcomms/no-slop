@@ -20,8 +20,11 @@ unless you add a Pangram key.
 
 ## Install
 
-1. `chrome://extensions` → turn on **Developer mode**
-2. **Load unpacked** → choose this folder
+1. Download [no-slop.zip](https://paramv.com/tools/no-slop.zip) (110 KB) and unzip it, or clone this repo
+2. `chrome://extensions` → turn on **Developer mode**
+3. **Load unpacked** → choose the folder
+
+`npm run zip` rebuilds the zip from this folder.
 
 Settings: right-click the icon → _Options_. Sensitivity (gentle / balanced / strict), blur or
 label only, images on/off, cook on/off, and an optional Pangram key.
@@ -36,7 +39,7 @@ tells only.
    density, emoji bullets, metronome sentence rhythm, stock phrases. These are what the notes
    and the cook panel name. On their own they catch the obvious and miss clean AI prose.
 2. **A local model** (`src/model.js`, `model/`). Logistic regression over hashed word
-   unigrams and bigrams, 2^18 int8 weights (256 KB), run in the service worker. Trained by
+   unigrams and bigrams, 2^17 int8 weights (128 KB), run in the service worker. Trained by
    `bin/train.py` on about 30,000 human and 20,000 machine texts. Human and machine text come
    from the same genres, so the model can't learn "marketing copy = AI".
 
@@ -49,15 +52,19 @@ The shipped model, on held-out text it never trained on:
 
 |                                                                 | blurred |
 | --------------------------------------------------------------- | ------- |
-| human · Hacker News comments, 2019                              | 0.3%    |
-| human · Yelp / Amazon reviews + Enron email                     | 0.1%    |
+| human · Hacker News comments, 2019                              | 0.2%    |
+| human · Yelp / Amazon reviews + Enron email                     | 0.2%    |
 | human · HC3 answers (Reddit ELI5, Wikipedia, finance, medicine) | 1.0%    |
-| human · RAID abstracts, news, book summaries                    | 3.0%    |
-| human · Project Gutenberg                                       | 0.0%    |
+| human · RAID abstracts, news, book summaries                    | 2.8%    |
+| human · Project Gutenberg                                       | 0.7%    |
 | machine · ChatGPT (HC3)                                         | 97.1%   |
 | machine · GPT-4, ChatGPT, Llama, Mistral, MPT chat (RAID)       | 98.3%   |
 | machine · qwen2.5 7b, web genres                                | 97.5%   |
-| machine · Cohere chat                                           | 81.3%   |
+| machine · Cohere chat                                           | 80.3%   |
+
+The hash width is a trade: 2^18 (256 KB) scored the same within noise, 2^16 (64 KB) lost
+about a point on ChatGPT and Cohere. `NOSLOP_BITS=18 NOSLOP_OUT=/tmp/m18 bin/train.py --final`
+then `NOSLOP_MODEL=/tmp/m18 node bin/eval.mjs` compares another width without touching `model/`.
 
 **Models it has never seen.** The one number to trust for next year's model comes from a run
 that held whole model families out of training:

@@ -1,11 +1,4 @@
 @font-face {
-  font-family: "Newsreader";
-  font-style: normal;
-  font-weight: 300 500;
-  font-display: swap;
-  src: url("../fonts/newsreader-latin.woff2") format("woff2");
-}
-@font-face {
   font-family: "Plex Mono";
   font-style: normal;
   font-weight: 400;
@@ -21,7 +14,7 @@
   --field: #fbfaf6;
   --slop: #c4513f;
   --focus: #b8860b;
-  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
   --mono: "Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -44,7 +37,7 @@
 body {
   background: var(--ground);
   color: var(--ink);
-  font: 300 17px/1.6 var(--serif);
+  font: 400 17px/1.6 var(--serif);
   -webkit-font-smoothing: antialiased;
 }
 main {

@@ -2,9 +2,10 @@
 """Train the no-slop classifier and export it for the extension.
 
   python3 bin/train.py            → model/weights.bin + model/meta.json, and a report
+  NOSLOP_BITS=18 NOSLOP_OUT=/tmp/m18 python3 bin/train.py --final   → try a hash width elsewhere
 
 Featurization mirrors src/model.js exactly (tokens → hashed unigrams + bigrams, presence,
-L2-normalised, 2^18 buckets). Dev-time deps: numpy, scipy, scikit-learn. The extension
+L2-normalised, 2^NOSLOP_BITS buckets, default 17). Dev-time deps: numpy, scipy, scikit-learn. The extension
 ships only the int8 weights; nothing here runs in the browser.
 
 Train  : HC3 (human + ChatGPT answers, 90% of questions) · Hacker News comments 2018 + 2020
@@ -12,7 +13,7 @@ Train  : HC3 (human + ChatGPT answers, 90% of questions) · Hacker News comments
 Test   : HC3 held-out questions · HN 2019 · Gutenberg · qwen held-out 20%
          · gpt-oss (a model family never trained on) · hand-written samples (never trained on)
 """
-import json, math, random, re, sys, time, urllib.request
+import json, math, os, random, re, sys, time, urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -23,8 +24,9 @@ from sklearn.metrics import roc_auc_score
 ROOT = Path(__file__).resolve().parent.parent
 FX = ROOT / "test/fixtures"
 CACHE = FX / ".cache"
-OUT = ROOT / "model"
-BITS, MASK = 18, (1 << 18) - 1
+OUT = Path(os.environ.get("NOSLOP_OUT") or ROOT / "model")
+BITS = int(os.environ.get("NOSLOP_BITS") or 17)  # hash width; src/model.js reads it from meta.json
+MASK = (1 << BITS) - 1
 rng = random.Random(13)
 
 # ---- featurize: keep identical to src/model.js --------------------------------------

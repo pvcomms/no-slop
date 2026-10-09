@@ -12,14 +12,20 @@
   "use strict";
   const UI_ATTR = "data-noslop-ui";
 
-  try {
-    const font = new FontFace(
-      "NoSlop Mono",
-      `url(${chrome.runtime.getURL("fonts/plexmono-latin-400.woff2")})`,
-    );
-    document.fonts.add(font);
-    font.load().catch(() => {});
-  } catch {}
+  // the mono face loads the first time anything is drawn, not on every page
+  let fontLoaded = false;
+  function loadFont() {
+    if (fontLoaded) return;
+    fontLoaded = true;
+    try {
+      const font = new FontFace(
+        "NoSlop Mono",
+        `url(${chrome.runtime.getURL("fonts/plexmono-latin-400.woff2")})`,
+      );
+      document.fonts.add(font);
+      font.load().catch(() => {});
+    } catch {}
+  }
 
   const CSS = `
     :host { all: initial !important; display: block !important; }
@@ -69,13 +75,25 @@
     @media (prefers-reduced-motion: reduce) { .chip, .card { transition: none; } }
   `;
 
+  // one parsed stylesheet shared by every note, chip and card on the page
+  let sheet = null;
+  try {
+    sheet = new CSSStyleSheet();
+    sheet.replaceSync(CSS);
+  } catch {
+    sheet = null;
+  }
   function shadowHost(tag) {
+    loadFont();
     const hostEl = document.createElement(tag || "span");
     hostEl.setAttribute(UI_ATTR, "");
     const root = hostEl.attachShadow({ mode: "closed" });
-    const style = document.createElement("style");
-    style.textContent = CSS;
-    root.append(style);
+    if (sheet) root.adoptedStyleSheets = [sheet];
+    else {
+      const style = document.createElement("style");
+      style.textContent = CSS;
+      root.append(style);
+    }
     return { hostEl, root };
   }
   const h = (tag, cls, text) => {

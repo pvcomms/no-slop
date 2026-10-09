@@ -31,7 +31,7 @@ test(
   { skip: !built && "run bin/train.py first" },
   () => {
     const meta = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8"));
-    const js = [...M.featurize(meta.probe.text)].sort((a, b) => a - b);
+    const js = [...M.featurize(meta.probe.text, meta.bits)].sort((a, b) => a - b);
     assert.deepEqual(js, meta.probe.features);
     const model = M.load(readFileSync(join(dir, "weights.bin")).buffer.slice(0), meta);
     assert.ok(Math.abs(M.probability(model, meta.probe.text) - meta.probe.p) < 1e-4);

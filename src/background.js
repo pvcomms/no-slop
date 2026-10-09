@@ -13,7 +13,7 @@ importScripts("settings.js", "model.js", "pangram.js", "provenance.js");
 const { DEFAULTS } = NoSlopSettings;
 const CORAL = "#e07a6b";
 const GREY = "#66635a";
-const IMG_BYTES = 384 * 1024; // labels sit in the first few hundred KB of a file
+const IMG_BYTES = 192 * 1024; // labels (XMP, JUMBF, PNG text) sit in the first segments of a file
 
 chrome.runtime.onInstalled.addListener(async () => {
   const s = await chrome.storage.sync.get(null);

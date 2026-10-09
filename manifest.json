@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Eat no SLOP & Cook no SLOP",
   "short_name": "no slop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One click: blur machine-written text and AI-labelled images as you read, and see the tells in what you write. Scores locally.",
   "icons": {
     "16": "icons/16.png",
